@@ -1,5 +1,8 @@
 package data_Ccsds;
 
+import data.CrcCcittChecksum;
+import data.IsoChecksum;
+
 /// <summary>CCSDS Packet (ECSS-E-70-41A) base class for telecommand and telemetry packets.</summary>
 public abstract class CcsdsPacket extends data.IDataBlock
 {
@@ -28,7 +31,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// </summary>
 	private int ApplicationProcessId;
 	public int getApplicationProcessId() { return ApplicationProcessId; }
-	public void	setApplicationProcessId(int value)
+	public void	setApplicationProcessId(int value) throws ArgumentOutOfRangeException
 	{
 		if ((value & 0x07FF) != value)  ///-----------------check
 			throw new ArgumentOutOfRangeException("Application Process Id Value");
@@ -65,7 +68,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// </summary>
 	private SequenceFlagsType SequenceFlags;
 	public int getSequenceFlags() { return SequenceFlags.getCode(); }
-	public void setSequenceFlags(SequenceFlagsType value)
+	public void setSequenceFlags(SequenceFlagsType value) throws ArgumentOutOfRangeException
 	{
 		if ((value.getCode() & 3) != value.getCode())
 			throw new ArgumentOutOfRangeException("SequenceFlags");
@@ -79,7 +82,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// </summary>
 	private int SequenceCount;
 	public int getSequenceCount() { return SequenceCount;}
-	public void setSequenceCount(int value) 
+	public void setSequenceCount(int value) throws ArgumentOutOfRangeException 
 	{
 		if ((value & 0x3FFF) != value)
 			throw new ArgumentOutOfRangeException("SequenceCount");
@@ -96,7 +99,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 		PacketSequenceControl = 0;
 			
 		// Sequence Flags
-		PacketSequenceControl |= ((SequenceFlags) << 14);
+		PacketSequenceControl |= ((SequenceFlags.getCode()) << 14);
 
 		// Sequence Count
 		PacketSequenceControl |= SequenceCount;
@@ -244,12 +247,12 @@ public abstract class CcsdsPacket extends data.IDataBlock
 		byte[] data = Data;
 		if(data != null)
 		{
-			Buffer.BlockCopy(data, 0, buffer, index, data.Length);
-			index += data.Length;
+			System.arraycopy(data, 0, buffer, index, data.length);
+			index += data.length;
 		}
 
 		// PDF Spare (alignment)
-		int pdfAlignment = PacketDataFieldAlignment; // alignment in bytes
+		int pdfAlignment = PacketDataFieldAlignment(); // alignment in bytes
 		if(pdfAlignment != 0)
 		{
 			int pdfLength = index - (start + HeaderLength); // Compute current length of PDF
@@ -257,9 +260,9 @@ public abstract class CcsdsPacket extends data.IDataBlock
 		}
 
 		// Checksum
-		if(HasPacketErrorControlField)
+		if(HasPacketErrorControlField())
 		{
-			ushort checksum = ComputeChecksum(buffer, start, index - start, ChecksumType);
+			int checksum = ComputeChecksum(buffer, start, index - start, checksumType);
 			ByteOrderConverter.CopyValueNetworkOrder(buffer, index, checksum);
 			index += 2;
 		}
@@ -281,7 +284,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// <returns>The read <see cref="CcsdsPacket"/> packet.</returns>
 	public static CcsdsPacket FromBuffer(byte[] buffer, int start)
 	{
-		bool typeIsTc = ((buffer[start] >> 4) & 0x01) == 1;
+		boolean typeIsTc = ((buffer[start] >> 4) & 0x01) == 1;
 		if(typeIsTc)
 			return Telecommand.FromBuffer(buffer, start);
 		else
@@ -294,25 +297,25 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	protected void FillHeadersAndPecFromBuffer(byte[] buffer, int start)
 	{
 		// Buffer big enough to at least have CCSDS Header and a PEC?
-		if((start + HeaderLength + (HasPacketErrorControlField ? 2 : 0)) > buffer.Length)
-			throw new ArgumentException("The buffer is too small to contain a packet at specified index.", "buffer");
+		if((start + HeaderLength + (HasPacketErrorControlField() ? 2 : 0)) > buffer.length)
+			throw new ArgumentException("The buffer is too small to contain a packet at specified index.");
 
 		// Packet Length first, needed to compute checksum
-		PacketLength = (ushort)(ByteOrderConverter.GetUInt16(buffer, start + 4) + 1);
+		PacketLength = (int)(ByteOrderConverter.GetUInt16(buffer, start + 4) + 1);
 
 		// Buffer big enough to contain full packet?
-		if((start + HeaderLength + PacketLength) > buffer.Length)
-			throw new ArgumentException(string.Format("The buffer is too small to contain the packet at specified index (missing {0} bytes).", (start + HeaderLength + PacketLength) - buffer.Length), "buffer");
+		if((start + HeaderLength + PacketLength) > buffer.length)
+			throw new ArgumentException(String.Format("The buffer is too small to contain the packet at specified index (missing {0} bytes).", (start + HeaderLength + PacketLength) - buffer.Length), "buffer");
 
-		//#region Packet Error Control
-		if(this.HasPacketErrorControlField)
+		//--------------------------------------------------------------------------------------------Packet Error Control
+		if(this.HasPacketErrorControlField())
 		{
 			// Extract PEC from field
-			int pecIndex = start + CcsdsPacket.HeaderLength + this.PacketLength - 2;
-			ushort pecFieldValue = ByteOrderConverter.GetUInt16(buffer, pecIndex);
+			int pecIndex = start + HeaderLength + getPacketLength() - 2;
+			int pecFieldValue = ByteOrderConverter.GetUInt16(buffer, pecIndex);
 
 			// Compute PEC for telemetry in buffer
-			ushort pecComputed = ComputeChecksum(buffer, start, pecIndex - start, ChecksumType);
+			int pecComputed = ComputeChecksum(buffer, start, pecIndex - start, checksumType);
 
 			// If checksum doesn't match, fire an exception
 			if(pecFieldValue != pecComputed)
@@ -325,12 +328,12 @@ public abstract class CcsdsPacket extends data.IDataBlock
 		// Check that Version Number =0
 		int versionNumber = (buffer[start] >> 5) & 0x07;
 		if(versionNumber != 0)
-			throw new NotSupportedException(string.Format("The CCSDS packet contained in the buffer refers to an unsupported CCSDS version {0}, only 0 is supported.", versionNumber));
+			throw new NotSupportedException("The CCSDS packet contained in the buffer refers to an unsupported CCSDS version"+versionNumber+", only 0 is supported.");
 
 		// Check that type field correspond to the expected value
-		bool type = ((buffer[start] >> 4) & 0x01) == 1;
+		boolean type = ((buffer[start] >> 4) & 0x01) == 1;
 		if(type != Type)
-			throw new ArgumentException(string.Format("The buffer contains a {0} packet but a {1} packet was expected.", type ? "telecommand" : "telemetry", Type ? "telecommand" : "telemetry"));
+			throw new ArgumentException(String.format("The buffer contains a {0} packet but a {1} packet was expected.", type ? "telecommand" : "telemetry", Type ? "telecommand" : "telemetry"));
 
 		// Check that Data Field Header Flag =1
 		int dataFieldHeaderFlag = (buffer[start] >> 3) & 0x01;
@@ -338,13 +341,13 @@ public abstract class CcsdsPacket extends data.IDataBlock
 			throw new NotSupportedException("The Data Field Header Flag of the CCSDS packet contained in the buffer is cleared.");
 
 		// Application Process ID
-		ApplicationProcessId = (ushort)(ByteOrderConverter.GetUInt16(buffer, start) & 0x07FF);
+		ApplicationProcessId = (int)(ByteOrderConverter.GetUInt16(buffer, start) & 0x07FF);
 
 		// Sequence Flags
-		SequenceFlags = (SequenceFlagsType)(byte)((buffer[start + 2] & 0xC0) >> 6);
+		SequenceFlags.setCode((int)((buffer[start + 2] & 0xC0) >> 6));
 
 		// Sequence Count
-		SequenceCount = (ushort)(ByteOrderConverter.GetUInt16(buffer, start + 2) & 0x3FFF);
+		SequenceCount = (int)(ByteOrderConverter.GetUInt16(buffer, start + 2) & 0x3FFF);
 	}
 
 	/// <summary>Fill the Data and Packet Error Control fields of the current instance with the values contained in the buffer.</summary>
@@ -353,19 +356,18 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// <param name="index">The index in bytes of the start of the Data field in the buffer.</param>
 	protected void FillDataFromBuffer(byte[] buffer, int start, int index)
 	{
-		//#region Data
 		int pdfOffset = index - HeaderLength - start;
-		int dataLength = this.PacketLength - pdfOffset - (this.HasPacketErrorControlField ? 2 : 0);
+		int dataLength = this.PacketLength - pdfOffset - (this.HasPacketErrorControlField() ? 2 : 0);
 		if(dataLength > 0)
 		{
 			byte[] data = new byte[dataLength];
-			Buffer.BlockCopy(buffer, index, data, 0, dataLength);
+			System.arraycopy(buffer, index, data, 0, dataLength);
 			this.Data = data;
 		}
 
 		// PDF Spare (alignment)
 		// Ignore PDF Spare at decoding, part of the data (can't know with only the full packet size)
-		//#endregion
+		
 	}
 
 	/// <summary>Computes the checksum of a data buffer.</summary>
@@ -374,7 +376,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// <param name="length">The length in bytes of the data.</param>
 	/// <param name="checksumType">The type of checksum to compute.</param>
 	/// <returns>The computed checksum.</returns>
-	public static ushort ComputeChecksum(byte[] buffer, int start, int length, ChecksumType checksumType)
+	public static int ComputeChecksum(byte[] buffer, int start, int length, ChecksumType checksumType) throws ArgumentException
 	{
 		if(checksumType == ChecksumType.Crc)
 			return CrcCcittChecksum.ComputeChecksum(buffer, start, length);
@@ -383,9 +385,8 @@ public abstract class CcsdsPacket extends data.IDataBlock
 		else
 			throw new ArgumentException("checksumType");
 	}
-	//#endregion
-
+	/*
 	/// <summary>Gets the length in bytes.</summary>
 	/// <value>The length.</value>
-	int IDataBlock.Length { get { return ComputeEntirePacketLength(); } }
+	int IDataBlock.Length { get { return ComputeEntirePacketLength(); } }*/
 }
