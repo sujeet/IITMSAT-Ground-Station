@@ -8,6 +8,7 @@ package data;
 		/// <value>The length in bytes.</value>
 		int Length; 
 		
+		
 		public int getLength() {
 			return Length;
 		}

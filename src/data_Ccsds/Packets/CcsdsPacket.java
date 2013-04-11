@@ -1,13 +1,19 @@
-package data_Ccsds;
+package data_Ccsds.Packets;
 
+import data.IDataBlock;
 import data.CrcCcittChecksum;
 import data.IsoChecksum;
 
+
 /// <summary>CCSDS Packet (ECSS-E-70-41A) base class for telecommand and telemetry packets.</summary>
-public abstract class CcsdsPacket extends data.IDataBlock
+public abstract class CcsdsPacket extends IDataBlock
 {
 	/// <summary>The length of the header of a CCSDS packet.</summary>
-	private final int HeaderLength = 6; // Packet header = 6 bytes
+	protected final static int HeaderLength = 6; // Packet header = 6 bytes
+
+	public static int getHeaderLength() {
+		return HeaderLength;
+	}
 
 	//-----------------------------------------------------------------------------------Packet Id
 	/// <summary>The version of the packet structure.</summary>
@@ -80,9 +86,9 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	/// This fields is provided to identify a particular telecommand/telemetry packet
 	/// so that it can be traced within the end-to-end telecommand/telemetry system.
 	/// </summary>
-	private int SequenceCount;
+	protected int SequenceCount;
 	public int getSequenceCount() { return SequenceCount;}
-	public void setSequenceCount(int value) throws ArgumentOutOfRangeException 
+	protected void setSequenceCount(int value) throws ArgumentOutOfRangeException 
 	{
 		if ((value & 0x3FFF) != value)
 			throw new ArgumentOutOfRangeException("SequenceCount");
@@ -154,7 +160,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	
 	/// <summary>The type of checksum (ISO or CRC).</summary>
 	/// <remarks>Only the CRC type is supported.</remarks>
-	private ChecksumType checksumType;
+	protected ChecksumType checksumType;
 	public ChecksumType getChecksumType() {
 		return checksumType;
 	}
@@ -185,7 +191,7 @@ public abstract class CcsdsPacket extends data.IDataBlock
 	//-----------------------------------------------------------------------------Abstract Methods
 	/// <summary>Gets a value indicating whether this instance has a Packet Error Control field.</summary>
 	/// <value><c>true</c> if this instance has a Packet Error Control field; otherwise, <c>false</c>.</value>
-	public abstract Boolean HasPacketErrorControlField(); //{ get; }
+	public abstract boolean HasPacketErrorControlField(); //{ get; }
 
 	/// <summary>Computes the length of the Data Field Header.</summary>
 	/// <returns>The length of the Data Field Header.</returns>

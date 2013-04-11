@@ -1,4 +1,4 @@
-package data_Ccsds;
+package data_Ccsds.Packets;
 
 	public class InvalidChecksumException extends Exception
 	{

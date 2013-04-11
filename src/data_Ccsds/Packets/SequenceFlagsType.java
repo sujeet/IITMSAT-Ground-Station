@@ -1,4 +1,4 @@
-package data_Ccsds;
+package data_Ccsds.Packets;
 
 public enum SequenceFlagsType {
 	/// <summary>The Sequence Flag field possible values.</summary>
