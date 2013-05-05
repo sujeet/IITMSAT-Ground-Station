@@ -51,8 +51,12 @@ import data_Ccsds.ParameterCode.ParameterCode;
 
 			// Function ID field
 			ParameterCode functionIdPc;
-			if(!Telecommand.EffectiveSettings.FunctionIdPcPerApid.TryGetValue(Apid, out functionIdPc))
+			if (Telecommand.EffectiveSettings.FunctionIdPcPerApid.containsKey (Apid)) {
+				functionIdPc = Telecommand.EffectiveSettings.FunctionIdPcPerApid.get (Apid);
+			}
+			else {
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
+			}
 			length += ParameterConverter.GetStorageSize(functionIdPc);
 
 			// Parameters field
@@ -74,8 +78,12 @@ import data_Ccsds.ParameterCode.ParameterCode;
 
 			// Get Function ID PC (padded)
 			ParameterCode functionIdPc;
-			if(!Telecommand.EffectiveSettings.FunctionIdPcPerApid.TryGetValue(Apid, out functionIdPc))
+			if(Telecommand.EffectiveSettings.FunctionIdPcPerApid.containsKey (Apid)) {
+				functionIdPc = Telecommand.EffectiveSettings.FunctionIdPcPerApid.get (Apid);
+			}
+			else {
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
+			}
 			// Insert Function ID field
 			int numberBitsInserted = ParameterConverter.InsertValue(buffer, index * 8, Number, functionIdPc); // Need bits index, have bytes
 			index += ParameterConverter.GetStorageSize(functionIdPc);
@@ -100,8 +108,12 @@ import data_Ccsds.ParameterCode.ParameterCode;
 		{
 			// Get Function ID PC (padded)
 			ParameterCode functionIdPc;
-			if(!Telecommand.EffectiveSettings.FunctionIdPcPerApid.TryGetValue(apid, out functionIdPc))
+			if(Telecommand.EffectiveSettings.FunctionIdPcPerApid.containsKey(apid)) {
+				functionIdPc = Telecommand.EffectiveSettings.FunctionIdPcPerApid.get (apid);
+			}
+			else {
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
+			}
 			int functionIdLength = ParameterConverter.GetStorageSize(functionIdPc);
 
 			// Extract number
