@@ -16,7 +16,7 @@ public class ParameterReader
 
 	/// <summary>Initializes a new instance of the <see cref="ParameterReader"/> class.</summary>
 	/// <param name="buffer">The buffer to be read.</param>
-	public ParameterReader(byte[] buffer)
+	public ParameterReader(byte[] buffer) throws ArgumentNullException, ArgumentOutOfRangeException
 	{
 		int startPosition=0;
 		// Check arguments
@@ -33,7 +33,7 @@ public class ParameterReader
 	/// <summary>Initializes a new instance of the <see cref="ParameterReader"/> class.</summary>
 	/// <param name="buffer">The buffer to be read.</param>
 	/// <param name="startPosition">The bit index of the starting position of the reader in the buffer.</param>
-	public ParameterReader(byte[] buffer, int startPosition)
+	public ParameterReader(byte[] buffer, int startPosition) throws ArgumentNullException, ArgumentOutOfRangeException
 	{
 		// Check arguments
 		if(buffer == null)
@@ -44,7 +44,7 @@ public class ParameterReader
 		_buffer = buffer;
 		Position = startPosition;
 	}
-
+	
 	/// <summary>Reads a parameter of the specified parameter code.</summary>
 	/// <typeparam name="T">The type of the parameter to read, must be compatible with the Parameter Code.</typeparam>
 	/// <param name="parameterCode">The Parameter Code of the parameter to read.</param>
@@ -53,8 +53,8 @@ public class ParameterReader
 	public <T> int Read(ParameterCode parameterCode, out T value)
 	{
 		int readLength;
-		value = ParameterConverter.ExtractValue<T>(_buffer, parameterCode, _position, out readLength);
-		_position += readLength;
+		value = ParameterConverter.ExtractValue<T>(_buffer, parameterCode, Position, out readLength);
+		Position += readLength;
 		return readLength;
 	}
 }
