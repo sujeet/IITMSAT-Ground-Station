@@ -1,5 +1,9 @@
 package data_Ccsds.Packets;
 
+import java.io.UnsupportedEncodingException;
+
+import data.NotImplementedException;
+import data_Ccsds.Function.ArgumentNullException;
 import data_Ccsds.ParameterCode.ParameterCode;
 import data_Ccsds.ParameterCode.ParameterConverter;
 
@@ -233,14 +237,14 @@ public class Telecommand extends CcsdsPacket
 	//#region Methods
 	/// <summary>Computes the length of the Data Field Header.</summary>
 	/// <returns>The length of the Data Field Header.</returns>
-	protected int ComputeDataFieldHeaderLength()
+	protected int ComputeDataFieldHeaderLength() throws NotSupportedException
 	{
 		return (int)(3 + computeDfhOptionalFieldsLength());
 	}
 
 	/// <summary>Calculates the length of the Data Field Header optional fields.</summary>
 	/// <returns>The length of Data Field Header optional fields.</returns>
-	private int computeDfhOptionalFieldsLength()
+	private int computeDfhOptionalFieldsLength() throws NotSupportedException
 	{
 		TelecommandSettings settings = EffectiveSettings;
 
@@ -249,7 +253,7 @@ public class Telecommand extends CcsdsPacket
 		// Source ID (only Enumerated PFCs with an integral number of bytes supported or padded _after_)
 		ParameterCode sourceIdPc = settings.SourceIdPc;
 		if(sourceIdPc != null)
-			optionalFieldsLength += ParameterConverter.GetStorageSize(sourceIdPc);
+			optionalFieldsLength += ParameterConverter.GetBitsSize(sourceIdPc);
 
 		// Spare / DFH alignment
 		int dfhAlignment = settings.DataFieldHeaderPadding; // alignment in bytes
@@ -264,7 +268,7 @@ public class Telecommand extends CcsdsPacket
 
 	/// <summary>Get the size of the telecommand in bits</summary>
 	/// <returns>Size in bits</returns>
-	public int GetBitsSize()
+	public int GetBitsSize() throws NotSupportedException
 	{
 		return ComputeEntirePacketLength() * 8;
 	}
@@ -274,7 +278,7 @@ public class Telecommand extends CcsdsPacket
 	/// <param name="start">The offset at which the Data Field Header starts in the buffer.</param>
 	/// <returns>The number of bytes written into the buffer.</returns>
 	/// <exception cref="System.ArgumentOutOfRangeException">The buffer is too small to put the data at the specified offset.</exception>
-	protected int WriteDataFieldHeaderToBuffer(byte[] buffer, int start)
+	protected int WriteDataFieldHeaderToBuffer(byte[] buffer, int start) throws NotSupportedException, UnsupportedEncodingException, ArgumentNullException, ArgumentOutOfRangeException
 	{
 		TelecommandSettings settings = EffectiveSettings;
 
@@ -296,7 +300,7 @@ public class Telecommand extends CcsdsPacket
 		if(sourceIdPc != null)
 		{
 			int insertedBits = ParameterConverter.InsertValue(buffer, index * 8, SourceId, sourceIdPc);
-			index += ParameterConverter.GetStorageSize(insertedBits);
+			index += ParameterConverter.GetByteSize (insertedBits);
 		}
 
 		// DFH Spare (alignment)
@@ -314,16 +318,16 @@ public class Telecommand extends CcsdsPacket
 	/// <summary>Reads a <see cref="Telecommand"/> packet from a buffer.</summary>
 	/// <param name="buffer">The buffer containing the <see cref="Telecommand"/> packet starting at byte 0.</param>
 	/// <returns>The read <see cref="Telecommand"/> packet.</returns>
-	public static Telecommand FromBuffer(byte[] buffer)
+	public static Telecommand FromBuffer(byte[] buffer) throws NotSupportedException, ArgumentException, InvalidChecksumException, NotImplementedException, ArgumentNullException
 	{
 		return FromBuffer(buffer, 0);
 	}
-
+	
 	/// <summary>Reads a <see cref="Telecommand"/> packet from a buffer.</summary>
 	/// <param name="buffer">The buffer containing the <see cref="Telecommand"/> packet.</param>
 	/// <param name="start">The index in bytes of the start of the <see cref="Telecommand"/> packet in the buffer.</param>
 	/// <returns>The read <see cref="Telecommand"/> packet.</returns>
-	public static Telecommand FromBuffer(byte[] buffer, int start)
+	public static Telecommand FromBuffer(byte[] buffer, int start) throws NotSupportedException, ArgumentException, InvalidChecksumException, NotImplementedException, ArgumentNullException
 	{
 		TelecommandSettings settings = EffectiveSettings;
 
@@ -366,8 +370,8 @@ public class Telecommand extends CcsdsPacket
 			ParameterCode sourceIdPc = settings.SourceIdPc;
 			if(sourceIdPc != null)
 			{
-				telecommand.SourceId = ParameterConverter.ExtractValue<uint>(buffer, sourceIdPc, index * 8); // offset is bytes, need bits!
-				index += ParameterConverter.GetStorageSize(ParameterConverter.GetBitsSize(sourceIdPc));
+				telecommand.SourceId = (long)ParameterConverter.ExtractValue(buffer, sourceIdPc, index * 8); // offset is bytes, need bits!
+				index += ParameterConverter.GetByteSize(ParameterConverter.GetBitsSize(sourceIdPc));
 			}
 
 			// DFH Spare (alignment)
@@ -390,7 +394,7 @@ public class Telecommand extends CcsdsPacket
 	/// <param name="start">The index in bytes of the start of the <see cref="Telecommand"/> packet in the buffer.</param>
 	/// <param name="settings">The <see cref="TelecommandSettings"/> to use to read the packet from the buffer.</param>
 	/// <returns>The read <see cref="Telecommand"/> packet.</returns>
-	public static Telecommand FromBuffer(byte[] buffer, int start, TelecommandSettings settings)
+	public static Telecommand FromBuffer(byte[] buffer, int start, TelecommandSettings settings) throws NotSupportedException, ArgumentException, InvalidChecksumException, NotImplementedException, ArgumentNullException
 	{
 		// Save old settings and apply new ones
 		TelecommandSettings oldSettings = Telecommand.Settings;

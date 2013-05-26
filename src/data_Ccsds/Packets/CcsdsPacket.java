@@ -1,5 +1,7 @@
 package data_Ccsds.Packets;
 
+import java.io.UnsupportedEncodingException;
+
 import data.ByteOrderConverter;
 import data.IDataBlock;
 import data.CrcCcittChecksum;
@@ -38,7 +40,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	/// The APID (Application Process ID) corresponds uniquely to an on-board
 	/// application process which is the destination for this packet.
 	/// </summary>
-	private int ApplicationProcessId;
+	protected int ApplicationProcessId;
 	public int getApplicationProcessId() { return ApplicationProcessId; }
 	public void	setApplicationProcessId(int value) throws ArgumentOutOfRangeException
 	{
@@ -124,7 +126,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	// Therefore private setter, and lazy getter if not set.
 	// But on top of it come the serialization, which doesn't call the object constructor.
 	private int PacketLength;
-	public int getPacketLength() 
+	public int getPacketLength() throws NotSupportedException 
 	{
 		if(PacketLength == 0)
 			PacketLength = ComputePacketLengthField();
@@ -195,14 +197,14 @@ public abstract class CcsdsPacket extends IDataBlock
 
 	/// <summary>Computes the length of the Data Field Header.</summary>
 	/// <returns>The length of the Data Field Header.</returns>
-	protected abstract int ComputeDataFieldHeaderLength();
+	protected abstract int ComputeDataFieldHeaderLength() throws NotSupportedException;
 
 	/// <summary>Convert the Data Field Header field of the current <see cref="CcsdsPacket"/> instance to bytes into the specified buffer.</summary>
 	/// <param name="buffer">The destination buffer of the bytes.</param>
 	/// <param name="start">The offset at which the Data Field Header starts in the buffer.</param>
 	/// <returns>The number of bytes written into the buffer.</returns>
 	/// <exception cref="System.ArgumentOutOfRangeException">The buffer is too small to put the data at the specified offset.</exception>
-	protected abstract int WriteDataFieldHeaderToBuffer(byte[] buffer, int start);
+	protected abstract int WriteDataFieldHeaderToBuffer(byte[] buffer, int start) throws NotSupportedException, UnsupportedEncodingException, ArgumentNullException, ArgumentOutOfRangeException;
 
 	/// <summary>Gets the alignment of the Packet Data Field in bytes.</summary>
 	/// <value>he alignment of the Packet Data Field in bytes.</value>
@@ -212,7 +214,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	//------------------------------------------------------------------------------Methods
 	/// <summary>Compute the length the CCSDS packet for the "Packet Length" field.</summary>
 	/// <returns>(Number of octets in packet data field) - 1</returns>
-	protected int ComputePacketLengthField()
+	protected int ComputePacketLengthField() throws NotSupportedException
 	{
 		// C = (Number of octets in packet data field) - 1
 		return (int)((HasPacketErrorControlField() ? 2 : 0) + ComputeDataFieldHeaderLength() + getDataLength() - 1);
@@ -220,7 +222,7 @@ public abstract class CcsdsPacket extends IDataBlock
 
 	/// <summary>Calculate the length of the entire CCSDS packet in bytes.</summary>
 	/// <returns>The length of the entire CCSDS packet in bytes.</returns>
-	protected int ComputeEntirePacketLength()
+	protected int ComputeEntirePacketLength() throws NotSupportedException
 	{
 		return ComputePacketLengthField() + 1 + HeaderLength;
 	}
@@ -230,7 +232,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	/// <param name="start">The index at which the packet must start in the buffer.</param>
 	/// <returns>The number of bytes written into the buffer.</returns>
 	/// <exception cref="System.ArgumentOutOfRangeException">The buffer is too small to put the data at the specified offset.</exception>
-	public int ToBuffer(byte[] buffer, int start) throws ArgumentNullException, ArgumentException, NotImplementedException
+	public int ToBuffer(byte[] buffer, int start) throws ArgumentNullException, ArgumentException, NotImplementedException, UnsupportedEncodingException, NotSupportedException, ArgumentOutOfRangeException
 	{
 		int index = start;
 
@@ -279,7 +281,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	/// <summary>Reads a <see cref="CcsdsPacket"/> packet from a buffer.</summary>
 	/// <param name="buffer">The buffer containing the <see cref="CcsdsPacket"/> packet starting at byte 0.</param>
 	/// <returns>The read <see cref="CcsdsPacket"/> packet.</returns>
-	public static CcsdsPacket FromBuffer(byte[] buffer)
+	public static CcsdsPacket FromBuffer(byte[] buffer) throws NotSupportedException, ArgumentException, InvalidChecksumException, NotImplementedException, ArgumentNullException
 	{
 		return FromBuffer(buffer, 0);
 	}
@@ -288,7 +290,7 @@ public abstract class CcsdsPacket extends IDataBlock
 	/// <param name="buffer">The buffer containing the <see cref="CcsdsPacket"/> packet.</param>
 	/// <param name="start">The index in bytes of the start of the <see cref="CcsdsPacket"/> packet in the buffer.</param>
 	/// <returns>The read <see cref="CcsdsPacket"/> packet.</returns>
-	public static CcsdsPacket FromBuffer(byte[] buffer, int start)
+	public static CcsdsPacket FromBuffer(byte[] buffer, int start) throws NotSupportedException, ArgumentException, InvalidChecksumException, NotImplementedException, ArgumentNullException
 	{
 		boolean typeIsTc = ((buffer[start] >> 4) & 0x01) == 1;
 		if(typeIsTc)

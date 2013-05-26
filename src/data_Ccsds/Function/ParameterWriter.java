@@ -1,8 +1,12 @@
 package data_Ccsds.Function;
 
+import java.io.UnsupportedEncodingException;
+
 import data_Ccsds.Packets.ArgumentOutOfRangeException;
+import data_Ccsds.Packets.NotSupportedException;
 import data_Ccsds.ParameterCode.ParameterCode;
 import data_Ccsds.ParameterCode.ParameterConverter;
+import data_Ccsds.ParameterCode.UnalignedData;
 
 /// <summary>Writes PUS-encoded parameters to a buffer.</summary>
 public class ParameterWriter
@@ -76,7 +80,7 @@ public class ParameterWriter
 	/// <param name="parameterCode">The parameter code of the parameter to read.</param>
 	/// <param name="value">The parameter's value to write.</param>
 	/// <returns>The number of bits written.</returns>
-	public <T> int Write(ParameterCode parameterCode, T value)
+	public <T> int Write(ParameterCode parameterCode, T value) throws UnsupportedEncodingException, NotSupportedException, ArgumentNullException, ArgumentOutOfRangeException
 	{
 		int written = ParameterConverter.InsertValue(_buffer, Position, value, parameterCode);
 		Position += written;

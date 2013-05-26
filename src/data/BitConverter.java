@@ -29,6 +29,48 @@ public class BitConverter
         return answer;
     }
     
+    public static byte [] GetBytes (short value)
+    {
+        return new byte[] {
+                           (byte)(value >>> 8),
+                           (byte)value
+                           };
+    }
+    
+    public static byte [] GetBytes (int value)
+    {
+        return new byte[] {
+                           (byte)(value >>> 24),
+                           (byte)(value >>> 16),
+                           (byte)(value >>> 8),
+                           (byte)value
+                           };
+    }
+    
+    public static byte [] GetBytes (long value)
+    {
+        return new byte[] {
+                           (byte)(value >>> 56),
+                           (byte)(value >>> 48),
+                           (byte)(value >>> 40),
+                           (byte)(value >>> 32),
+                           (byte)(value >>> 24),
+                           (byte)(value >>> 16),
+                           (byte)(value >>> 8),
+                           (byte)value
+                           };
+    }
+    
+    public static byte [] GetBytes (float value)
+    {
+        return GetBytes (Float.floatToIntBits (value));
+    }
+    
+    public static byte [] GetBytes (double value)
+    {
+        return GetBytes (Double.doubleToLongBits (value));
+    }
+    
     /**
      * @param srcArray Byte array from which the short at given array is to be retrieved.
      * @param offset Short at this offset should be returned.

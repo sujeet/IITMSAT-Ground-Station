@@ -1,7 +1,13 @@
 package data_Ccsds.Function;
 
+import java.io.UnsupportedEncodingException;
+
+import data_Ccsds.Packets.ArgumentException;
+import data_Ccsds.Packets.ArgumentOutOfRangeException;
+import data_Ccsds.Packets.NotSupportedException;
 import data_Ccsds.Packets.Telecommand;
 import data_Ccsds.ParameterCode.ParameterCode;
+import data_Ccsds.ParameterCode.ParameterConverter;
 
    /// <summary>Function class</summary>
 	public class Function extends data.IDataBlock
@@ -11,26 +17,17 @@ import data_Ccsds.ParameterCode.ParameterCode;
 		public int getApid() {
 			return Apid;
 		}
-		private void setApid(int apid) {
-			Apid = apid;
-		}
 
 		/// <summary>The function number.</summary>
 		public long Number;
 		public long getNumber() {
 			return Number;
 		}
-		private void setNumber(long number) {
-			Number = number;
-		}
 
 		/// <summary>The function's parameters.</summary>
 		public byte[] Parameters; 
 		public byte[] getParameters() {
 			return Parameters;
-		}
-		private void setParameters(byte[] parameters) {
-			Parameters = parameters;
 		}
 
 		/// <summary>Initializes a new instance of the <see cref="Function"/> class.</summary>
@@ -46,7 +43,7 @@ import data_Ccsds.ParameterCode.ParameterCode;
 
 		/// <summary>Gets the length in bytes of the data block.</summary>
 		/// <value>The length in bytes.</value>
-		public int getLength() {
+		public int getLength() throws NotSupportedException {
 			int length = 0;
 
 			// Function ID field
@@ -57,7 +54,7 @@ import data_Ccsds.ParameterCode.ParameterCode;
 			else {
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
 			}
-			length += ParameterConverter.GetStorageSize(functionIdPc);
+			length += ParameterConverter.GetByteSize (functionIdPc);
 
 			// Parameters field
 			if(Parameters != null)
@@ -72,7 +69,7 @@ import data_Ccsds.ParameterCode.ParameterCode;
 		/// <param name="start">The index in bytes at which the data must start in the buffer.</param>
 		/// <returns>The number of bytes written in the buffer.</returns>
 		/// <exception cref="System.ArgumentOutOfRangeException">The buffer is too small to put the data at the specified offset.</exception>
-		public int ToBuffer(byte[] buffer, int start)
+		public int ToBuffer(byte[] buffer, int start) throws NotSupportedException, UnsupportedEncodingException, ArgumentNullException, ArgumentOutOfRangeException
 		{
 			int index = start;
 
@@ -85,8 +82,8 @@ import data_Ccsds.ParameterCode.ParameterCode;
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
 			}
 			// Insert Function ID field
-			int numberBitsInserted = ParameterConverter.InsertValue(buffer, index * 8, Number, functionIdPc); // Need bits index, have bytes
-			index += ParameterConverter.GetStorageSize(functionIdPc);
+			ParameterConverter.InsertValue(buffer, index * 8, Number, functionIdPc); // Need bits index, have bytes
+			index += ParameterConverter.GetByteSize (functionIdPc);
 
 			// Insert Parameters field
 			if(Parameters != null)
@@ -104,7 +101,7 @@ import data_Ccsds.ParameterCode.ParameterCode;
 		/// <param name="length">The length in bytes of the data belonging to the function.</param>
 		/// <param name="apid">The function's Application Process ID.</param>
 		/// <returns>The read <see cref="Function"/>.</returns>
-		public static Function FromBuffer(byte[] buffer, int start, int length, int apid)
+		public static Function FromBuffer(byte[] buffer, int start, int length, int apid) throws ArgumentNullException, ArgumentException, NotSupportedException
 		{
 			// Get Function ID PC (padded)
 			ParameterCode functionIdPc;
@@ -114,10 +111,10 @@ import data_Ccsds.ParameterCode.ParameterCode;
 			else {
 				functionIdPc = Telecommand.EffectiveSettings.DefaultFunctionIdPc;
 			}
-			int functionIdLength = ParameterConverter.GetStorageSize(functionIdPc);
+			int functionIdLength = ParameterConverter.GetByteSize (functionIdPc);
 
 			// Extract number
-			long number = ParameterConverter.ExtractValue<uint>(buffer, functionIdPc, start * 8); // Need bits index, have bytes
+			long number = (long) ParameterConverter.ExtractValue (buffer, functionIdPc, start * 8); // Need bits index, have bytes
 
 			// Extract parameters
 			int parametersLength = length - functionIdLength;

@@ -3,13 +3,13 @@ package data_Ccsds.ParameterCode;
 public class ParameterCode
 {
 	/// <summary>The Parameter Type Code (PTC).</summary>
-	private PtcType Ptc;
+	public PtcType Ptc;
 	public PtcType getPtc() {
 		return Ptc;
 	}
 
 	/// <summary>The Parameter Format Code (PFC).</summary>
-	private int Pfc;
+	int Pfc;
 	public int getPfc() {
 		return Pfc;
 	}

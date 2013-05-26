@@ -1,12 +1,11 @@
 package data_Ccsds.Function;
 
 import data_Ccsds.Packets.ArgumentOutOfRangeException;
-import data_Ccsds.ParameterCode.ParameterCode;
 
 /// <summary>Reads PUS-encoded parameters from a buffer.</summary>
 public class ParameterReader
 {
-	private byte[] _buffer;
+/*    private byte[] _buffer;*/
 
 	/// <summary>The current bit position of the reader in the buffer.</summary>
 	private int Position;
@@ -25,7 +24,7 @@ public class ParameterReader
 		if(startPosition < 0 || startPosition >= (buffer.length * 8))
 			throw new ArgumentOutOfRangeException("Index does not point to a location inside the buffer."+startPosition);
 
-		_buffer = buffer;
+/*		_buffer = buffer;*/
 		Position = startPosition;
 
 	}
@@ -41,7 +40,7 @@ public class ParameterReader
 		if(startPosition < 0 || startPosition >= (buffer.length * 8))
 			throw new ArgumentOutOfRangeException("Index does not point to a location inside the buffer."+startPosition);
 
-		_buffer = buffer;
+/*		_buffer = buffer;*/
 		Position = startPosition;
 	}
 	
@@ -50,11 +49,11 @@ public class ParameterReader
 	/// <param name="parameterCode">The Parameter Code of the parameter to read.</param>
 	/// <param name="value">The read parameter's value.</param>
 	/// <returns>The number of bits read.</returns>
-	public <T> int Read(ParameterCode parameterCode, out T value)
+/*	public <T> int Read(ParameterCode parameterCode, out T value)
 	{
 		int readLength;
 		value = ParameterConverter.ExtractValue<T>(_buffer, parameterCode, Position, out readLength);
 		Position += readLength;
 		return readLength;
-	}
+	}*/
 }

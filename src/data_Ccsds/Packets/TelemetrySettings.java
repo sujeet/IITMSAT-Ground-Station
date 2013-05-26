@@ -74,7 +74,7 @@ public class TelemetrySettings
 
 		// Default values
 		HasPacketErrorControl = true;
-		ChecksumType = ChecksumType.Crc;
+		ChecksumType = data_Ccsds.Packets.ChecksumType.Crc;
 		HasPacketSubcounter = false;
 		DestinationIdPc = null;
 		DefaultTimePc = null;

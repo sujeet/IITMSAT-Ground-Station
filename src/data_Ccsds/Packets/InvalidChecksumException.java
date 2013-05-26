@@ -2,7 +2,9 @@ package data_Ccsds.Packets;
 
 	public class InvalidChecksumException extends Exception
 	{
-		/// <summary>Gets the expected checksum.</summary>
+        private static final long serialVersionUID = 1L;
+
+        /// <summary>Gets the expected checksum.</summary>
 		/// <value>The expected checksum.</value>
 		public int ExpectedChecksum;// { get; private set; }
 
